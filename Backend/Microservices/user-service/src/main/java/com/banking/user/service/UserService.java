@@ -2,12 +2,15 @@ package com.banking.user.service;
 
 import com.banking.user.client.AccountClient;
 import com.banking.user.dto.AccountDto;
+import com.banking.user.dto.UserRequestDto;
+import com.banking.user.dto.UserResponseDto;
 import com.banking.user.entity.User;
 import com.banking.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -21,20 +24,56 @@ public class UserService {
         this.accountClient = accountClient;
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserResponseDto> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        List<UserResponseDto> responseDtos = new ArrayList<>();
+        for (User u : users){
+            UserResponseDto userResponseDto = new UserResponseDto();
+            userResponseDto.setId(u.getId());
+            userResponseDto.setName(u.getName());
+            userResponseDto.setEmail(u.getEmail());
+            userResponseDto.setRole(u.getRole());
+
+            responseDtos.add(userResponseDto);
+        }
+
+        return responseDtos;
     }
 
-    public User registerUser(User user) {
-        return userRepository.save(user);
+    public UserResponseDto registerUser(UserRequestDto requestDto) {
+
+        User user = new User();
+        user.setName(requestDto.getName());
+        user.setEmail(requestDto.getEmail());
+        user.setPassword(requestDto.getPassword());
+        user.setRole(requestDto.getRole());
+
+
+        User savedUser = userRepository.save(user);
+
+
+        UserResponseDto responseDto = new UserResponseDto();
+        responseDto.setId(savedUser.getId());
+        responseDto.setName(savedUser.getName());
+        responseDto.setEmail(savedUser.getEmail());
+        responseDto.setRole(savedUser.getRole());
+
+        return responseDto;
     }
 
-    public User getUserById(Long userId) {
-        return userRepository.findById(userId)
+    public UserResponseDto getUserById(Long userId) {
+
+        User u = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User Not Found"));
+        UserResponseDto userResponseDto = new UserResponseDto();
+        userResponseDto.setId(u.getId());
+        userResponseDto.setName(u.getName());
+        userResponseDto.setEmail(u.getEmail());
+        userResponseDto.setRole(u.getRole());
+        return userResponseDto;
     }
 
-    public User updateUser(Long userId, User updatedUser) {
+    public UserResponseDto updateUser(Long userId, User updatedUser) {
 
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User Not Found"));
@@ -42,7 +81,14 @@ public class UserService {
         existingUser.setName(updatedUser.getName());
         existingUser.setEmail(updatedUser.getEmail());
 
-        return userRepository.save(existingUser);
+        User u = userRepository.save(existingUser);
+        UserResponseDto userResponseDto = new UserResponseDto();
+        userResponseDto.setId(u.getId());
+        userResponseDto.setName(u.getName());
+        userResponseDto.setEmail(u.getEmail());
+        userResponseDto.setRole(u.getRole());
+        return userResponseDto;
+
     }
 
     public void deleteUser(Long userId) {

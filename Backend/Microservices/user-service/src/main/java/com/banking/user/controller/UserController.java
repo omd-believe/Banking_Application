@@ -1,6 +1,8 @@
 package com.banking.user.controller;
 
 import com.banking.user.dto.AccountDto;
+import com.banking.user.dto.UserRequestDto;
+import com.banking.user.dto.UserResponseDto;
 import com.banking.user.entity.User;
 import com.banking.user.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -20,22 +22,22 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers(){
+    public ResponseEntity<List<UserResponseDto>> getAllUsers(){
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> registerUser(@RequestBody User user){
-        return new ResponseEntity<>(userService.registerUser(user), HttpStatus.CREATED);
+    public ResponseEntity<UserResponseDto> registerUser(@RequestBody UserRequestDto userRequestDto) {
+        return new ResponseEntity<>(userService.registerUser(userRequestDto), HttpStatus.CREATED);
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<User> getUserById(@PathVariable Long userId){
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long userId){
         return ResponseEntity.ok(userService.getUserById(userId));
     }
 
     @PutMapping("/{userId}")
-    public ResponseEntity<User> updateUser(@PathVariable Long userId, @RequestBody User updatedUser){
+    public ResponseEntity<UserResponseDto> updateUser(@PathVariable Long userId, @RequestBody User updatedUser){
         return ResponseEntity.ok(userService.updateUser(userId, updatedUser));
     }
 
