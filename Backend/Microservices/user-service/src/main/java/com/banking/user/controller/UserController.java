@@ -1,5 +1,6 @@
 package com.banking.user.controller;
 
+import com.banking.user.dto.AccountDto;
 import com.banking.user.entity.User;
 import com.banking.user.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -44,5 +45,14 @@ public class UserController {
         userService.deleteUser(userId);
 
         return ResponseEntity.ok("User deleted successfully");
+    }
+
+    @GetMapping("/{userId}/accounts")
+    public ResponseEntity<List<AccountDto>> getAccountsOfUser(
+            @PathVariable Long userId) {
+
+        return ResponseEntity.ok(
+                userService.getAccountsOfUser(userId)
+        );
     }
 }

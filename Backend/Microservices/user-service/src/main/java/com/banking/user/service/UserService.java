@@ -1,5 +1,7 @@
 package com.banking.user.service;
 
+import com.banking.user.client.AccountClient;
+import com.banking.user.dto.AccountDto;
 import com.banking.user.entity.User;
 import com.banking.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -11,10 +13,12 @@ import java.util.List;
 @Service
 public class UserService {
 
-    private final UserRepository userRepository;
+    private UserRepository userRepository;
+    private AccountClient accountClient;
 
-    public UserService(UserRepository userRepository){
+    public UserService(UserRepository userRepository, AccountClient accountClient){
         this.userRepository =userRepository;
+        this.accountClient = accountClient;
     }
 
     public List<User> getAllUsers() {
@@ -48,4 +52,16 @@ public class UserService {
 
         userRepository.delete(user);
     }
+
+
+    public List<AccountDto> getAccountsOfUser(Long userId) {
+
+        System.out.println("Received userId = " + userId);
+
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User Not Found"));
+
+        return accountClient.getAccountsByUserId(userId);
+    }
+
 }
