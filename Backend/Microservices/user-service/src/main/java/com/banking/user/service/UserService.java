@@ -5,6 +5,7 @@ import com.banking.user.dto.AccountDto;
 import com.banking.user.dto.UserRequestDto;
 import com.banking.user.dto.UserResponseDto;
 import com.banking.user.entity.User;
+import com.banking.user.exception.UserNotFoundException;
 import com.banking.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -64,7 +65,7 @@ public class UserService {
     public UserResponseDto getUserById(Long userId) {
 
         User u = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User Not Found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
         UserResponseDto userResponseDto = new UserResponseDto();
         userResponseDto.setId(u.getId());
         userResponseDto.setName(u.getName());
@@ -76,7 +77,7 @@ public class UserService {
     public UserResponseDto updateUser(Long userId, User updatedUser) {
 
         User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User Not Found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
 
         existingUser.setName(updatedUser.getName());
         existingUser.setEmail(updatedUser.getEmail());
@@ -94,7 +95,7 @@ public class UserService {
     public void deleteUser(Long userId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User Not Found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
 
         userRepository.delete(user);
     }
@@ -105,7 +106,7 @@ public class UserService {
         System.out.println("Received userId = " + userId);
 
         userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User Not Found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
 
         return accountClient.getAccountsByUserId(userId);
     }
