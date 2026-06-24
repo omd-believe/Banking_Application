@@ -1,6 +1,7 @@
 package com.banking.account.service;
 
 import com.banking.account.entity.Account;
+import com.banking.account.exception.AccountNotFoundException;
 import com.banking.account.repository.AccountRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +38,7 @@ public class AccountService {
     public Account deposit(Long accountId, Double amount) {
 
         Account account = accountRepository.findById(accountId).
-                orElseThrow(() -> new RuntimeException("Account not found."));
+                orElseThrow(() -> new AccountNotFoundException("Account not found with ID: " + accountId));
         account.setBalance(account.getBalance() + amount);
 
         return accountRepository.save(account);
@@ -46,7 +47,7 @@ public class AccountService {
     public Account withdraw(Long accountId, Double amount) {
 
         Account account = accountRepository.findById(accountId).
-                orElseThrow(() -> new RuntimeException("Account not found."));
+                orElseThrow(() -> new AccountNotFoundException("Account not found with ID: " + accountId));
         account.setBalance(account.getBalance() - amount);
 
         return accountRepository.save(account);
@@ -56,10 +57,9 @@ public class AccountService {
     @Transactional
     public void transfer(Long fromAccountId, Long toAccountId, Double amount) {
         Account sendingAccount = accountRepository.findById(fromAccountId).
-                orElseThrow(() -> new RuntimeException("Sending Account not found."));
+                orElseThrow(() -> new AccountNotFoundException("Account not found with ID: " + fromAccountId));
         Account recievingAccount = accountRepository.findById(toAccountId).
-                orElseThrow(() -> new RuntimeException("Recieving Account not found."));
-
+                orElseThrow(() -> new AccountNotFoundException("Account not found with ID: " + toAccountId));
         withdraw(fromAccountId, amount);
         deposit(toAccountId, amount);
     }
