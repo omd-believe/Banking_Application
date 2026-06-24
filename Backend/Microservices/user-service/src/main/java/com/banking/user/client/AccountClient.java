@@ -8,8 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
 
 @FeignClient(
-        name = "account-service",
-        url = "http://localhost:8082"
+        name = "account-service"
 )
 
 public interface AccountClient {
