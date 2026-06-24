@@ -1,26 +1,10 @@
-
+HELP.md
 target/
+.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-
-.mvn/wrapper/maven-wrapper.jar
-
-
-HELP.md
-
-
-**/application.yml
-**/application.yaml
-**/application.properties
-
-
-.idea/
-*.iws
-*.iml
-*.ipr
-
-
+### STS ###
 .apt_generated
 .classpath
 .factorypath
@@ -29,26 +13,21 @@ HELP.md
 .springBeans
 .sts4-cache
 
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
 
+### NetBeans ###
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-
-
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-
+### VS Code ###
 .vscode/
-
-
-*.log
-
-
-.DS_Store
-Thumbs.db
-
-Backend/banking-config-repo/
