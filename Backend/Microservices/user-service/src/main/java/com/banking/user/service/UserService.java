@@ -74,22 +74,23 @@ public class UserService {
         return userResponseDto;
     }
 
-    public UserResponseDto updateUser(Long userId, User updatedUser) {
+    public UserResponseDto updateUser(Long userId, UserRequestDto updatedUserDto) {
 
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
 
-        existingUser.setName(updatedUser.getName());
-        existingUser.setEmail(updatedUser.getEmail());
+        existingUser.setName(updatedUserDto.getName());
+        existingUser.setEmail(updatedUserDto.getEmail());
 
         User u = userRepository.save(existingUser);
+
         UserResponseDto userResponseDto = new UserResponseDto();
         userResponseDto.setId(u.getId());
         userResponseDto.setName(u.getName());
         userResponseDto.setEmail(u.getEmail());
         userResponseDto.setRole(u.getRole());
-        return userResponseDto;
 
+        return userResponseDto;
     }
 
     public void deleteUser(Long userId) {

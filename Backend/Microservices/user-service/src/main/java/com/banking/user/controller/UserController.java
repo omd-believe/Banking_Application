@@ -5,6 +5,7 @@ import com.banking.user.dto.UserRequestDto;
 import com.banking.user.dto.UserResponseDto;
 import com.banking.user.entity.User;
 import com.banking.user.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDto> registerUser(@RequestBody UserRequestDto userRequestDto) {
+    public ResponseEntity<UserResponseDto> registerUser(@Valid @RequestBody UserRequestDto userRequestDto) {
         return new ResponseEntity<>(userService.registerUser(userRequestDto), HttpStatus.CREATED);
     }
 
@@ -37,8 +38,11 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
-    public ResponseEntity<UserResponseDto> updateUser(@PathVariable Long userId, @RequestBody User updatedUser){
-        return ResponseEntity.ok(userService.updateUser(userId, updatedUser));
+    public ResponseEntity<UserResponseDto> updateUser(
+            @PathVariable Long userId,
+            @Valid @RequestBody UserRequestDto updatedUserDto) {
+
+        return ResponseEntity.ok(userService.updateUser(userId, updatedUserDto));
     }
 
     @DeleteMapping("/{userId}")
