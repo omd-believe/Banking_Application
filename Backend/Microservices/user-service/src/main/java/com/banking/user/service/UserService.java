@@ -1,13 +1,13 @@
 package com.banking.user.service;
 
 import com.banking.user.client.AccountClient;
-import com.banking.user.dto.AccountDto;
-import com.banking.user.dto.UserRequestDto;
-import com.banking.user.dto.UserResponseDto;
+import com.banking.user.config.JwtService;
+import com.banking.user.dto.*;
 import com.banking.user.entity.User;
 import com.banking.user.exception.UserNotFoundException;
 import com.banking.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 
@@ -19,10 +19,38 @@ public class UserService {
 
     private UserRepository userRepository;
     private AccountClient accountClient;
+    private PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public UserService(UserRepository userRepository, AccountClient accountClient){
+    public UserService(UserRepository userRepository,
+                       AccountClient accountClient,
+                       PasswordEncoder passwordEncoder,
+                       JwtService jwtService){
         this.userRepository =userRepository;
         this.accountClient = accountClient;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+    }
+
+    public AuthResponseDto login(LoginRequestDto loginDto){
+
+        User user = userRepository.findByEmail(loginDto.getEmail())
+                .orElseThrow(() -> new UserNotFoundException("Invalid email or Password"));
+
+        if(!passwordEncoder.matches(loginDto.getPassword(), user.getPassword())){
+            throw new RuntimeException("Invalid email or password");
+        }
+
+        String token = jwtService.generateToken(user.getEmail());
+
+        UserResponseDto userResponseDto = new UserResponseDto();
+        userResponseDto.setId(user.getId());
+        userResponseDto.setName(user.getName());
+        userResponseDto.setEmail(user.getEmail());
+        userResponseDto.setRole(user.getRole());
+
+        return new AuthResponseDto(token, userResponseDto);
+
     }
 
     public List<UserResponseDto> getAllUsers() {
@@ -46,7 +74,8 @@ public class UserService {
         User user = new User();
         user.setName(requestDto.getName());
         user.setEmail(requestDto.getEmail());
-        user.setPassword(requestDto.getPassword());
+
+        user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
         user.setRole(requestDto.getRole());
 
 

@@ -1,8 +1,6 @@
 package com.banking.user.controller;
 
-import com.banking.user.dto.AccountDto;
-import com.banking.user.dto.UserRequestDto;
-import com.banking.user.dto.UserResponseDto;
+import com.banking.user.dto.*;
 import com.banking.user.entity.User;
 import com.banking.user.service.UserService;
 import jakarta.validation.Valid;
@@ -21,6 +19,13 @@ public class UserController {
     public UserController(UserService userService){
         this.userService = userService;
     }
+
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody LoginRequestDto loginDto) {
+        return ResponseEntity.ok(userService.login(loginDto));
+    }
+
 
     @GetMapping
     public ResponseEntity<List<UserResponseDto>> getAllUsers(){
