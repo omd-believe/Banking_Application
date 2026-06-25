@@ -1,7 +1,10 @@
 package com.banking.account.service;
 
+import com.banking.account.client.TransactionClient;
 import com.banking.account.dto.AccountResponseDto;
+import com.banking.account.dto.TransactionRequestDto;
 import com.banking.account.entity.Account;
+import com.banking.account.enums.TransactionType;
 import com.banking.account.exception.AccountNotFoundException;
 import com.banking.account.repository.AccountRepository;
 import org.springframework.stereotype.Service;
@@ -15,10 +18,12 @@ import java.util.UUID;
 @Service
 public class AccountService {
 
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
+    private final TransactionClient transactionClient;
 
-    public AccountService(AccountRepository accountRepository){
+    public AccountService(AccountRepository accountRepository, TransactionClient transactionClient){
         this.accountRepository = accountRepository;
+        this.transactionClient = transactionClient;
     }
 
     private AccountResponseDto mapToDto(Account account) {
@@ -51,24 +56,43 @@ public class AccountService {
         return dtos;
     }
 
-    public AccountResponseDto deposit(Long accountId, Double amount) {
 
+    private void logTransaction(Long accountId, Double amount, TransactionType type, String description) {
+        TransactionRequestDto log = new TransactionRequestDto();
+        log.setAccountId(accountId);
+        log.setAmount(amount);
+        log.setTransactionType(type);
+        log.setDescription(description);
+        transactionClient.recordTransaction(log);
+    }
+
+
+
+    public AccountResponseDto deposit(Long accountId, Double amount) {
         Account account = accountRepository.findById(accountId).
                 orElseThrow(() -> new AccountNotFoundException("Account not found with ID: " + accountId));
-        account.setBalance(account.getBalance() + amount);
 
+        account.setBalance(account.getBalance() + amount);
         Account savedAccount = accountRepository.save(account);
+
+        logTransaction(accountId, amount, TransactionType.DEPOSIT, "Deposit at branch/ATM");
 
         return mapToDto(savedAccount);
     }
 
-    public AccountResponseDto withdraw(Long accountId, Double amount) {
 
+    public AccountResponseDto withdraw(Long accountId, Double amount) {
         Account account = accountRepository.findById(accountId).
                 orElseThrow(() -> new AccountNotFoundException("Account not found with ID: " + accountId));
-        account.setBalance(account.getBalance() - amount);
 
+        if (account.getBalance() < amount) {
+            throw new RuntimeException("Insufficient funds for withdrawal");
+        }
+
+        account.setBalance(account.getBalance() - amount);
         Account savedAccount = accountRepository.save(account);
+
+        logTransaction(accountId, amount, TransactionType.WITHDRAWAL, "Withdrawal from account");
 
         return mapToDto(savedAccount);
     }
@@ -76,10 +100,6 @@ public class AccountService {
 
     @Transactional
     public void transfer(Long fromAccountId, Long toAccountId, Double amount) {
-        Account sendingAccount = accountRepository.findById(fromAccountId).
-                orElseThrow(() -> new AccountNotFoundException("Account not found with ID: " + fromAccountId));
-        Account recievingAccount = accountRepository.findById(toAccountId).
-                orElseThrow(() -> new AccountNotFoundException("Account not found with ID: " + toAccountId));
         withdraw(fromAccountId, amount);
         deposit(toAccountId, amount);
     }
