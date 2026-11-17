@@ -10,4 +10,6 @@ import java.util.List;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
     List<Transaction> findByAccountIdOrderByTimestampDesc(Long accountId);
+
+    boolean existsByEventId(String eventId);
 }

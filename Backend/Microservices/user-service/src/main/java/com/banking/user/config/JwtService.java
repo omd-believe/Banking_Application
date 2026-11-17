@@ -1,5 +1,6 @@
 package com.banking.user.config;
 
+import com.banking.user.entity.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -20,9 +21,11 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secret;
 
-    public String generateToken(String email){
+    public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, email);
+        claims.put("userId", user.getId());
+        claims.put("role", user.getRole());
+        return createToken(claims, user.getEmail());
     }
 
     public String createToken(Map<String, Object> claims, String email){

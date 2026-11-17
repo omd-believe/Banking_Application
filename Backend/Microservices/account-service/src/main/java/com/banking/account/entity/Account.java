@@ -2,6 +2,7 @@ package com.banking.account.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.math.BigDecimal;
 
 @Entity
 @Data
@@ -12,12 +13,15 @@ public class Account {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false ,unique = true)
+    @Column(nullable = false, unique = true)
     private String accountNumber;
 
-    @Column(nullable = false)
-    private Double balance;
+    @Column(nullable = false, precision = 19, scale = 4)
+    private BigDecimal balance;
 
     @Column(nullable = false)
     private Long userId;
+
+    @Version
+    private Long version;
 }

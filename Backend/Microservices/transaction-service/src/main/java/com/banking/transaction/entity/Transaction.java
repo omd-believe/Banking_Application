@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,7 +21,7 @@ public class Transaction {
     private Long accountId;
 
     @Column(nullable = false)
-    private Double amount;
+    private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -31,4 +32,7 @@ public class Transaction {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime timestamp;
+
+    @Column(unique = true)
+    private String eventId;
 }
