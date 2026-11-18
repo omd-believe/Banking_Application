@@ -33,15 +33,21 @@ public class AccountService {
     private final JournalEntryRepository journalEntryRepository;
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
+    private final FraudDetectionService fraudDetectionService;
+    private final AuditChainService auditChainService;
 
     public AccountService(AccountRepository accountRepository,
                           JournalEntryRepository journalEntryRepository,
                           OutboxEventRepository outboxEventRepository,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          FraudDetectionService fraudDetectionService,
+                          AuditChainService auditChainService) {
         this.accountRepository = accountRepository;
         this.journalEntryRepository = journalEntryRepository;
         this.outboxEventRepository = outboxEventRepository;
         this.objectMapper = objectMapper;
+        this.fraudDetectionService = fraudDetectionService;
+        this.auditChainService = auditChainService;
     }
 
     public AccountResponseDto create(Long userId) {
@@ -77,6 +83,8 @@ public class AccountService {
         entry.addPosting(createPosting(accountId, EntryType.CREDIT, amount, newBalance));
         journalEntryRepository.save(entry);
 
+        auditChainService.recordEvent("DEPOSIT", accountId, "Amount=" + amount + ", Ref=" + resolvedRef);
+
         queueTransactionEvent(resolvedRef, accountId, SYSTEM_VAULT_ACCOUNT_ID,
                 amount, TransactionType.DEPOSIT, "Deposit at branch/ATM");
 
@@ -97,6 +105,8 @@ public class AccountService {
             throw new InsufficientFundsException("Insufficient funds for withdrawal");
         }
 
+        fraudDetectionService.evaluateOutgoingTransaction(account, amount);
+
         BigDecimal newBalance = account.getBalance().subtract(amount);
         account.setBalance(newBalance);
         Account savedAccount = accountRepository.save(account);
@@ -106,6 +116,8 @@ public class AccountService {
         entry.addPosting(createPosting(accountId, EntryType.DEBIT, amount, newBalance));
         entry.addPosting(createPosting(SYSTEM_VAULT_ACCOUNT_ID, EntryType.CREDIT, amount, BigDecimal.ZERO));
         journalEntryRepository.save(entry);
+
+        auditChainService.recordEvent("WITHDRAWAL", accountId, "Amount=" + amount + ", Ref=" + resolvedRef);
 
         queueTransactionEvent(resolvedRef, accountId, SYSTEM_VAULT_ACCOUNT_ID,
                 amount, TransactionType.WITHDRAWAL, "Withdrawal from account");
@@ -140,6 +152,8 @@ public class AccountService {
             throw new InsufficientFundsException("Insufficient funds for transfer");
         }
 
+        fraudDetectionService.evaluateOutgoingTransaction(fromAccount, amount);
+
         BigDecimal senderNewBalance = fromAccount.getBalance().subtract(amount);
         BigDecimal receiverNewBalance = toAccount.getBalance().add(amount);
 
@@ -155,6 +169,8 @@ public class AccountService {
         entry.addPosting(createPosting(fromAccountId, EntryType.DEBIT, amount, senderNewBalance));
         entry.addPosting(createPosting(toAccountId, EntryType.CREDIT, amount, receiverNewBalance));
         journalEntryRepository.save(entry);
+
+        auditChainService.recordEvent("TRANSFER", fromAccountId, "To=" + toAccountId + ", Amount=" + amount + ", Ref=" + resolvedRef);
 
         // Queue async Kafka events for both sender and receiver
         queueTransactionEvent(resolvedRef, fromAccountId, toAccountId,
@@ -232,5 +248,20 @@ public class AccountService {
         dto.setBalance(account.getBalance());
         dto.setUserId(account.getUserId());
         return dto;
+    }
+
+    @Transactional
+    public void unfreezeAccount(Long accountId) {
+        Account account = accountRepository.findByIdWithLock(accountId)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found with ID: " + accountId));
+
+        account.setFrozen(false);
+        accountRepository.save(account);
+
+        // Clear the Redis velocity counter so the user can transact immediately
+        fraudDetectionService.clearVelocityWindow(accountId);
+
+        // Record the admin unfreeze action in the hash-chained audit log
+        auditChainService.recordEvent("ACCOUNT_UNFROZEN", accountId, "Account unfrozen after manual review");
     }
 }

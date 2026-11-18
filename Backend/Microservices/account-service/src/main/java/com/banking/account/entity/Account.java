@@ -24,4 +24,7 @@ public class Account {
 
     @Version
     private Long version;
+
+    @Column(nullable = false)
+    private boolean frozen = false;
 }

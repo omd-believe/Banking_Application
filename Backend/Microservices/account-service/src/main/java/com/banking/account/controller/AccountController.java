@@ -2,6 +2,7 @@ package com.banking.account.controller;
 
 import com.banking.account.dto.AccountResponseDto;
 import com.banking.account.service.AccountService;
+import com.banking.account.service.AuditChainService;
 import com.banking.account.service.IdempotencyService;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Validated
 @RestController
@@ -19,10 +21,14 @@ public class AccountController {
 
     private final AccountService accountService;
     private final IdempotencyService idempotencyService;
+    private final AuditChainService auditChainService;
 
-    public AccountController(AccountService accountService, IdempotencyService idempotencyService) {
+    public AccountController(AccountService accountService,
+                             IdempotencyService idempotencyService,
+                             AuditChainService auditChainService) {
         this.accountService = accountService;
         this.idempotencyService = idempotencyService;
+        this.auditChainService = auditChainService;
     }
 
     @PostMapping("/create/{userId}")
@@ -84,5 +90,17 @@ public class AccountController {
             idempotencyService.releaseOnFailure(idempotencyKey);
             throw ex;
         }
+    }
+
+    @GetMapping("/audit/verify")
+    public ResponseEntity<?> verifyAuditChain() {
+        return ResponseEntity.ok(auditChainService.verifyChainIntegrity());
+    }
+
+    @PutMapping("/{accountId}/unfreeze")
+    public ResponseEntity<String> unfreezeAccount(
+            @PathVariable Long accountId) {
+        accountService.unfreezeAccount(accountId);
+        return ResponseEntity.ok("Account " + accountId + " unfrozen.");
     }
 }

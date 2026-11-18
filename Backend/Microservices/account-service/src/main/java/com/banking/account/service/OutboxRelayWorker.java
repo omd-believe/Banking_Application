@@ -35,7 +35,6 @@ public class OutboxRelayWorker {
 
         for (OutboxEvent event : pendingEvents) {
             try {
-                // Partition key = aggregateId (accountId) to guarantee per-account event ordering
                 kafkaTemplate.send(event.getTopic(), event.getAggregateId(), event.getPayload()).get();
                 event.setStatus(OutboxStatus.SENT);
                 event.setProcessedAt(LocalDateTime.now());
